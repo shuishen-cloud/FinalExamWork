@@ -3,6 +3,8 @@ package com.restaurant.management;
 import java.math.BigDecimal;
 import java.util.Scanner;
 
+import com.restaurant.management.gui.RestaurantManagementMainFrame;
+
 /**
  * 餐厅管理系统主类 - 提供用户界面和演示功能
  */
@@ -11,39 +13,69 @@ public class RestaurantManagementSystemMain {
     private static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
-        System.out.println("欢迎使用餐厅管理系统！");
+        // 询问用户选择运行模式
+        System.out.println("餐厅管理系统");
+        System.out.println("请选择运行模式:");
+        System.out.println("1. 图形界面模式 (GUI)");
+        System.out.println("2. 命令行模式 (CLI)");
+        System.out.print("请输入选择 (1 或 2): ");
         
-        // 初始化一些示例数据
-        initializeSampleData();
+        int modeChoice = getIntInput();
         
-        boolean running = true;
-        while (running) {
-            showMainMenu();
-            int choice = getIntInput();
+        if (modeChoice == 1) {
+            // 启动GUI模式
+            System.out.println("启动图形界面模式...");
+            javax.swing.SwingUtilities.invokeLater(() -> {
+                try {
+                    javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                new RestaurantManagementMainFrame();
+            });
+        } else if (modeChoice == 2) {
+            // 初始化一些示例数据
+            initializeSampleData();
             
-            switch (choice) {
-                case 1:
-                    manageMenu();
-                    break;
-                case 2:
-                    manageTables();
-                    break;
-                case 3:
-                    manageOrders();
-                    break;
-                case 4:
-                    manageCustomers();
-                    break;
-                case 5:
-                    generateReports();
-                    break;
-                case 0:
-                    running = false;
-                    System.out.println("感谢使用餐厅管理系统！");
-                    break;
-                default:
-                    System.out.println("无效选择，请重试。");
+            boolean running = true;
+            while (running) {
+                showMainMenu();
+                int choice = getIntInput();
+                
+                switch (choice) {
+                    case 1:
+                        manageMenu();
+                        break;
+                    case 2:
+                        manageTables();
+                        break;
+                    case 3:
+                        manageOrders();
+                        break;
+                    case 4:
+                        manageCustomers();
+                        break;
+                    case 5:
+                        generateReports();
+                        break;
+                    case 0:
+                        running = false;
+                        System.out.println("感谢使用餐厅管理系统！");
+                        break;
+                    default:
+                        System.out.println("无效选择，请重试。");
+                }
             }
+        } else {
+            System.out.println("无效选择，启动图形界面模式...");
+            javax.swing.SwingUtilities.invokeLater(() -> {
+                try {
+                    javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                new RestaurantManagementMainFrame();
+            });
         }
         
         scanner.close();
