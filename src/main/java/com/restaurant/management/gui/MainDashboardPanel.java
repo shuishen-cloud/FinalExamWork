@@ -2,8 +2,6 @@ package com.restaurant.management.gui;
 
 import com.restaurant.management.*;
 
-import com.restaurant.management.MenuItem;
-
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -28,7 +26,7 @@ public class MainDashboardPanel extends JPanel {
     private JTable menuTable;
     private DefaultTableModel menuTableModel;
     private JTextField customerNameField;
-    private JComboBox<MenuItem> menuItemComboBox;
+    private JComboBox<com.restaurant.management.MenuItem> menuItemComboBox;
     private JTextField quantityField;
     private JLabel currentOrderIdLabel;
     
@@ -176,7 +174,7 @@ public class MainDashboardPanel extends JPanel {
                     int menuItemId = (int) menuTableModel.getValueAt(selectedRow, 0); // ID列
                     // 在下拉框中找到对应的MenuItem并选择
                     for (int i = 0; i < menuItemComboBox.getItemCount(); i++) {
-                        MenuItem item = menuItemComboBox.getItemAt(i);
+                        com.restaurant.management.MenuItem item = menuItemComboBox.getItemAt(i);
                         if (item.getId() == menuItemId) {
                             menuItemComboBox.setSelectedItem(item);
                             break;
@@ -231,7 +229,7 @@ public class MainDashboardPanel extends JPanel {
             return;
         }
         
-        MenuItem selectedMenuItem = (MenuItem) menuItemComboBox.getSelectedItem();
+        com.restaurant.management.MenuItem selectedMenuItem = (com.restaurant.management.MenuItem) menuItemComboBox.getSelectedItem();
         if (selectedMenuItem == null) {
             JOptionPane.showMessageDialog(this, "请选择菜品！", "提示", JOptionPane.WARNING_MESSAGE);
             return;
@@ -367,8 +365,8 @@ public class MainDashboardPanel extends JPanel {
         menuTableModel.setRowCount(0);
         menuItemComboBox.removeAllItems();
         
-        List<MenuItem> menuItems = rms.getMenuItems();
-        for (MenuItem item : menuItems) {
+        List<com.restaurant.management.MenuItem> menuItems = rms.getMenuItems();
+        for (com.restaurant.management.MenuItem item : menuItems) {
             // 添加到表格
             Object[] rowData = {
                 item.getId(),
