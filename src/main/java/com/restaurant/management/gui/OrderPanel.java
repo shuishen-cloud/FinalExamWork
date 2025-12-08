@@ -1,0 +1,312 @@
+package com.restaurant.management.gui;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.List;
+
+/**
+ * 订单面板
+ */
+public class OrderPanel extends JPanel {
+    private Order currentOrder;
+    private DatabaseManager dbManager;
+    private JTable orderTable;
+    private DefaultTableModel tableModel;
+    private JButton removeItemButton;
+    private JButton clearOrderButton;
+    private JButton submitOrderButton;
+    private JLabel subtotalLabel;
+    private JLabel taxLabel;
+    private JLabel totalLabel;
+    private JTextArea notesArea;
+
+    public OrderPanel(Order currentOrder, DatabaseManager dbManager) {
+        this.currentOrder = currentOrder;
+        this.dbManager = dbManager;
+        initializeComponents();
+        setupLayout();
+        setupEventHandlers();
+        updateOrderDisplay();
+    }
+
+    private void initializeComponents() {
+        setBorder(new EmptyBorder(10, 10, 10, 10));
+        setLayout(new BorderLayout());
+
+        // 初始化表格模型
+        String[] columnNames = {"菜品", "单价", "数量", "小计", "备注"};
+        tableModel = new DefaultTableModel(columnNames, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // 表格不可编辑
+            }
+        };
+
+        // 创建表格
+        orderTable = new JTable(tableModel);
+        orderTable.setFont(new Font("微软雅黑", Font.PLAIN, 12));
+        orderTable.setRowHeight(25);
+        
+        // 设置列宽
+        TableColumn column = null;
+        for (int i = 0; i < orderTable.getColumnCount(); i++) {
+            column = orderTable.getColumnModel().getColumn(i);
+            switch (i) {
+                case 0: // 菜品名称
+                    column.setPreferredWidth(150);
+                    break;
+                case 1: // 单价
+                    column.setPreferredWidth(80);
+                    break;
+                case 2: // 数量
+                    column.setPreferredWidth(60);
+                    break;
+                case 3: // 小计
+                    column.setPreferredWidth(80);
+                    break;
+                case 4: // 备注
+                    column.setPreferredWidth(120);
+                    break;
+            }
+        }
+
+        // 初始化按钮
+        removeItemButton = new JButton("删除选中项");
+        removeItemButton.setFont(new Font("微软雅黑", Font.PLAIN, 12));
+        removeItemButton.setBackground(new Color(220, 20, 60)); // 红色
+        removeItemButton.setForeground(Color.WHITE);
+        
+        clearOrderButton = new JButton("清空订单");
+        clearOrderButton.setFont(new Font("微软雅黑", Font.PLAIN, 12));
+        clearOrderButton.setBackground(new Color(255, 165, 0)); // 橙色
+        clearOrderButton.setForeground(Color.WHITE);
+        
+        submitOrderButton = new JButton("提交订单");
+        submitOrderButton.setFont(new Font("微软雅黑", Font.BOLD, 14));
+        submitOrderButton.setBackground(new Color(34, 139, 34)); // 绿色
+        submitOrderButton.setForeground(Color.WHITE);
+
+        // 初始化总计标签
+        subtotalLabel = new JLabel("小计: ¥0.00");
+        subtotalLabel.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        
+        taxLabel = new JLabel("税费: ¥0.00");
+        taxLabel.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        
+        totalLabel = new JLabel("总计: ¥0.00");
+        totalLabel.setFont(new Font("微软雅黑", Font.BOLD, 16));
+        totalLabel.setForeground(new Color(255, 69, 0)); // 红色
+
+        // 初始化备注区域
+        notesArea = new JTextArea();
+        notesArea.setFont(new Font("微软雅黑", Font.PLAIN, 12));
+        notesArea.setRows(3);
+        notesArea.setWrapStyleWord(true);
+        notesArea.setLineWrap(true);
+    }
+
+    private void setupLayout() {
+        // 表格区域
+        JScrollPane tableScrollPane = new JScrollPane(orderTable);
+        tableScrollPane.setPreferredSize(new Dimension(600, 200));
+
+        // 按钮面板
+        JPanel buttonPanel = new JPanel(new FlowLayout());
+        buttonPanel.add(removeItemButton);
+        buttonPanel.add(clearOrderButton);
+        buttonPanel.add(submitOrderButton);
+
+        // 总计面板
+        JPanel totalPanel = new JPanel(new GridLayout(3, 1, 5, 5));
+        totalPanel.setBorder(BorderFactory.createTitledBorder("订单总计"));
+        totalPanel.add(subtotalLabel);
+        totalPanel.add(taxLabel);
+        totalPanel.add(totalLabel);
+
+        // 备注面板
+        JPanel notesPanel = new JPanel(new BorderLayout());
+        notesPanel.setBorder(BorderFactory.createTitledBorder("订单备注"));
+        notesPanel.add(new JScrollPane(notesArea), BorderLayout.CENTER);
+
+        // 右侧信息面板
+        JPanel infoPanel = new JPanel(new BorderLayout());
+        infoPanel.add(totalPanel, BorderLayout.NORTH);
+        infoPanel.add(notesPanel, BorderLayout.CENTER);
+
+        // 主面板布局
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
+                                             tableScrollPane, infoPanel);
+        splitPane.setDividerLocation(500);
+
+        add(splitPane, BorderLayout.CENTER);
+        add(buttonPanel, BorderLayout.SOUTH);
+    }
+
+    private void setupEventHandlers() {
+        // 删除选中项按钮事件
+        removeItemButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                removeSelectedItem();
+            }
+        });
+        
+        // 清空订单按钮事件
+        clearOrderButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                clearOrder();
+            }
+        });
+        
+        // 提交订单按钮事件
+        submitOrderButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                submitOrder();
+            }
+        });
+    }
+
+    // 更新订单显示
+    public void updateOrderDisplay() {
+        // 清空表格
+        tableModel.setRowCount(0);
+        
+        // 添加订单项到表格
+        List<OrderItem> items = currentOrder.getItems();
+        for (OrderItem item : items) {
+            Object[] rowData = {
+                item.getMenuItem().getName(),
+                "¥" + String.format("%.2f", item.getMenuItem().getPrice()),
+                item.getQuantity(),
+                "¥" + String.format("%.2f", item.getSubtotal()),
+                item.getNotes()
+            };
+            tableModel.addRow(rowData);
+        }
+        
+        // 更新总计信息
+        updateTotalLabels();
+    }
+
+    // 更新总计标签
+    private void updateTotalLabels() {
+        currentOrder.calculateTotals();
+        subtotalLabel.setText("小计: ¥" + String.format("%.2f", currentOrder.getSubtotal()));
+        taxLabel.setText("税费: ¥" + String.format("%.2f", currentOrder.getTax()));
+        totalLabel.setText("总计: ¥" + String.format("%.2f", currentOrder.getTotal()));
+    }
+
+    // 删除选中项
+    private void removeSelectedItem() {
+        int selectedRow = orderTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "请先选择要删除的项目", "提示", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // 获取要删除的订单项
+        OrderItem itemToRemove = currentOrder.getItems().get(selectedRow);
+        
+        int result = JOptionPane.showConfirmDialog(
+            this,
+            "确定要删除 " + itemToRemove.getMenuItem().getName() + " 吗？",
+            "确认删除",
+            JOptionPane.YES_NO_OPTION
+        );
+        
+        if (result == JOptionPane.YES_OPTION) {
+            currentOrder.removeItem(itemToRemove);
+            updateOrderDisplay();
+        }
+    }
+
+    // 清空订单
+    private void clearOrder() {
+        if (currentOrder.getItems().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "订单已经是空的", "提示", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        
+        int result = JOptionPane.showConfirmDialog(
+            this,
+            "确定要清空整个订单吗？",
+            "确认清空",
+            JOptionPane.YES_NO_OPTION
+        );
+        
+        if (result == JOptionPane.YES_OPTION) {
+            // 创建新的订单列表来清空订单
+            currentOrder.getItems().clear();
+            updateOrderDisplay();
+        }
+    }
+
+    // 提交订单
+    private void submitOrder() {
+        if (currentOrder.getItems().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "订单为空，无法提交", "提示", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // 保存备注
+        String notes = notesArea.getText().trim();
+        if (!notes.isEmpty()) {
+            // 这里可以将备注与订单关联，当前实现中我们仅显示提醒
+            JOptionPane.showMessageDialog(this, "订单备注已保存", "提示", JOptionPane.INFORMATION_MESSAGE);
+        }
+
+        // 显示订单摘要
+        StringBuilder summary = new StringBuilder();
+        summary.append("订单摘要:\n");
+        List<OrderItem> items = currentOrder.getItems();
+        for (OrderItem item : items) {
+            summary.append("- ")
+                   .append(item.getMenuItem().getName())
+                   .append(" x")
+                   .append(item.getQuantity())
+                   .append(": ¥")
+                   .append(String.format("%.2f", item.getSubtotal()))
+                   .append("\n");
+        }
+        summary.append("\n小计: ¥").append(String.format("%.2f", currentOrder.getSubtotal()))
+               .append("\n税费: ¥").append(String.format("%.2f", currentOrder.getTax()))
+               .append("\n总计: ¥").append(String.format("%.2f", currentOrder.getTotal()));
+
+        int result = JOptionPane.showConfirmDialog(
+            this,
+            summary.toString() + "\n\n确定要提交订单吗？",
+            "确认提交订单",
+            JOptionPane.YES_NO_OPTION
+        );
+        
+        if (result == JOptionPane.YES_OPTION) {
+            // 更新订单状态
+            currentOrder.setStatus("已提交");
+            
+            // 将订单保存到数据库
+            dbManager.saveOrder(currentOrder);
+            
+            JOptionPane.showMessageDialog(this, 
+                "订单已成功提交到厨房！\n订单号: " + currentOrder.getOrderId(), 
+                "提交成功", 
+                JOptionPane.INFORMATION_MESSAGE);
+                
+            // 为下一个订单创建一个新的Order实例
+            // 在实际应用中，可能希望保留当前订单或创建新订单
+            currentOrder.getItems().clear();
+            updateOrderDisplay();
+        }
+    }
+
+    // 刷新面板
+    public void refresh() {
+        updateOrderDisplay();
+    }
+}
