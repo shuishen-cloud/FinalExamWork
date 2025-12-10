@@ -45,6 +45,7 @@ public class RestaurantManagementSystem extends JFrame {
     private void initializeComponents() {
         // 设置窗口标题
         setTitle("餐厅点餐管理系统");
+        // 设置窗口图标（如果有的话）
         
         // 初始化数据库管理器
         dbManager = new DatabaseManager();
@@ -57,6 +58,8 @@ public class RestaurantManagementSystem extends JFrame {
         // 初始化选项卡面板
         tabbedPane = new JTabbedPane();
         tabbedPane.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        // 设置选项卡面板的背景色
+        tabbedPane.setBackground(new Color(0xECF0F1));
         
         // 添加面板到选项卡
         tabbedPane.addTab("菜单浏览", null, menuPanel, "浏览和选择菜品");
@@ -65,23 +68,35 @@ public class RestaurantManagementSystem extends JFrame {
         
         // 初始化菜单栏
         menuBar = new JMenuBar();
+        menuBar.setBackground(new Color(0x2C3E50));
+        menuBar.setForeground(Color.WHITE);
         
         // 文件菜单
         fileMenu = new JMenu("文件");
         fileMenu.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        fileMenu.setForeground(Color.WHITE);
         exitItem = new JMenuItem("退出");
         exitItem.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        exitItem.setBackground(new Color(0x2C3E50));
+        exitItem.setForeground(Color.WHITE);
         fileMenu.add(exitItem);
         
         // 视图菜单
         viewMenu = new JMenu("视图");
         viewMenu.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        viewMenu.setForeground(Color.WHITE);
         menuViewItem = new JMenuItem("菜单浏览");
         menuViewItem.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        menuViewItem.setBackground(new Color(0x2C3E50));
+        menuViewItem.setForeground(Color.WHITE);
         orderViewItem = new JMenuItem("订单管理");
         orderViewItem.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        orderViewItem.setBackground(new Color(0x2C3E50));
+        orderViewItem.setForeground(Color.WHITE);
         billViewItem = new JMenuItem("账单管理");
         billViewItem.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        billViewItem.setBackground(new Color(0x2C3E50));
+        billViewItem.setForeground(Color.WHITE);
         
         viewMenu.add(menuViewItem);
         viewMenu.add(orderViewItem);
@@ -90,8 +105,11 @@ public class RestaurantManagementSystem extends JFrame {
         // 帮助菜单
         helpMenu = new JMenu("帮助");
         helpMenu.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        helpMenu.setForeground(Color.WHITE);
         aboutItem = new JMenuItem("关于");
         aboutItem.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        aboutItem.setBackground(new Color(0x2C3E50));
+        aboutItem.setForeground(Color.WHITE);
         helpMenu.add(aboutItem);
         
         // 添加菜单到菜单栏
@@ -106,6 +124,7 @@ public class RestaurantManagementSystem extends JFrame {
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // 防止直接关闭
         setSize(1000, 700);
         setLocationRelativeTo(null); // 窗口居中
+        getContentPane().setBackground(new Color(0xECF0F1)); // 设置主窗口背景色
         
         // 设置主面板
         setLayout(new BorderLayout());
@@ -113,9 +132,12 @@ public class RestaurantManagementSystem extends JFrame {
         
         // 添加状态栏
         JPanel statusBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        statusBar.setBackground(new Color(0x2C3E50));
+        statusBar.setForeground(Color.WHITE);
         statusBar.setBorder(BorderFactory.createLoweredBevelBorder());
         JLabel statusLabel = new JLabel("就绪");
         statusLabel.setFont(new Font("微软雅黑", Font.PLAIN, 12));
+        statusLabel.setForeground(Color.WHITE);
         statusBar.add(statusLabel);
         
         add(statusBar, BorderLayout.SOUTH);
@@ -212,8 +234,12 @@ public class RestaurantManagementSystem extends JFrame {
     public static void main(String[] args) {
         // 设置系统外观
         try {
+            // 尝试使用系统外观
             for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                } else if ("Metal".equals(info.getName())) {
                     UIManager.setLookAndFeel(info.getClassName());
                     break;
                 }

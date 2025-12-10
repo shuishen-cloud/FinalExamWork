@@ -4,6 +4,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -37,6 +38,7 @@ public class OrderPanel extends JPanel {
     private void initializeComponents() {
         setBorder(new EmptyBorder(10, 10, 10, 10));
         setLayout(new BorderLayout());
+        setBackground(new Color(0xECF0F1)); // 设置背景色
 
         // 初始化表格模型
         String[] columnNames = {"菜品", "单价", "数量", "小计", "备注"};
@@ -50,7 +52,11 @@ public class OrderPanel extends JPanel {
         // 创建表格
         orderTable = new JTable(tableModel);
         orderTable.setFont(new Font("微软雅黑", Font.PLAIN, 12));
-        orderTable.setRowHeight(25);
+        orderTable.setRowHeight(30); // 增加行高以提高可读性
+        orderTable.setSelectionBackground(new Color(0xD6EAF8)); // 设置选中行背景色
+        orderTable.setGridColor(new Color(0xBDC3C7)); // 设置网格颜色
+        orderTable.setBackground(Color.WHITE);
+        orderTable.setForeground(new Color(0x2C3E50));
         
         // 设置列宽
         TableColumn column = null;
@@ -78,29 +84,76 @@ public class OrderPanel extends JPanel {
         // 初始化按钮
         removeItemButton = new JButton("删除选中项");
         removeItemButton.setFont(new Font("微软雅黑", Font.PLAIN, 12));
-        removeItemButton.setBackground(new Color(220, 20, 60)); // 红色
+        removeItemButton.setBackground(new Color(0xE74C3C)); // 红色主题
         removeItemButton.setForeground(Color.WHITE);
+        removeItemButton.setFocusPainted(false);
+        removeItemButton.setBorder(BorderFactory.createCompoundBorder(
+            new LineBorder(new Color(0xBDC3C7), 1, true),
+            BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
+        // 添加悬停效果
+        removeItemButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                removeItemButton.setBackground(new Color(0xC0392B)); // 深红色
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                removeItemButton.setBackground(new Color(0xE74C3C)); // 恢复原色
+            }
+        });
         
         clearOrderButton = new JButton("清空订单");
         clearOrderButton.setFont(new Font("微软雅黑", Font.PLAIN, 12));
-        clearOrderButton.setBackground(new Color(255, 165, 0)); // 橙色
+        clearOrderButton.setBackground(new Color(0xF39C12)); // 橙色主题
         clearOrderButton.setForeground(Color.WHITE);
+        clearOrderButton.setFocusPainted(false);
+        clearOrderButton.setBorder(BorderFactory.createCompoundBorder(
+            new LineBorder(new Color(0xBDC3C7), 1, true),
+            BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
+        // 添加悬停效果
+        clearOrderButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                clearOrderButton.setBackground(new Color(0xD35400)); // 深橙色
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                clearOrderButton.setBackground(new Color(0xF39C12)); // 恢复原色
+            }
+        });
         
         submitOrderButton = new JButton("提交订单");
         submitOrderButton.setFont(new Font("微软雅黑", Font.BOLD, 14));
-        submitOrderButton.setBackground(new Color(34, 139, 34)); // 绿色
+        submitOrderButton.setBackground(new Color(0x27AE60)); // 绿色主题
         submitOrderButton.setForeground(Color.WHITE);
+        submitOrderButton.setFocusPainted(false);
+        submitOrderButton.setBorder(BorderFactory.createCompoundBorder(
+            new LineBorder(new Color(0xBDC3C7), 1, true),
+            BorderFactory.createEmptyBorder(8, 15, 8, 15)
+        ));
+        // 添加悬停效果
+        submitOrderButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                submitOrderButton.setBackground(new Color(0x229954)); // 深绿色
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                submitOrderButton.setBackground(new Color(0x27AE60)); // 恢复原色
+            }
+        });
 
         // 初始化总计标签
         subtotalLabel = new JLabel("小计: ¥0.00");
         subtotalLabel.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        subtotalLabel.setForeground(new Color(0x2C3E50));
         
         taxLabel = new JLabel("税费: ¥0.00");
         taxLabel.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        taxLabel.setForeground(new Color(0x2C3E50));
         
         totalLabel = new JLabel("总计: ¥0.00");
         totalLabel.setFont(new Font("微软雅黑", Font.BOLD, 16));
-        totalLabel.setForeground(new Color(255, 69, 0)); // 红色
+        totalLabel.setForeground(new Color(0xE74C3C)); // 红色主题
 
         // 初始化备注区域
         notesArea = new JTextArea();
@@ -108,15 +161,20 @@ public class OrderPanel extends JPanel {
         notesArea.setRows(3);
         notesArea.setWrapStyleWord(true);
         notesArea.setLineWrap(true);
+        notesArea.setBorder(new LineBorder(new Color(0xBDC3C7), 1, true));
+        notesArea.setBackground(Color.WHITE);
+        notesArea.setForeground(new Color(0x2C3E50));
     }
 
     private void setupLayout() {
         // 表格区域
         JScrollPane tableScrollPane = new JScrollPane(orderTable);
         tableScrollPane.setPreferredSize(new Dimension(600, 200));
+        tableScrollPane.setBorder(new LineBorder(new Color(0xBDC3C7), 1, true));
 
         // 按钮面板
         JPanel buttonPanel = new JPanel(new FlowLayout());
+        buttonPanel.setBackground(new Color(0xECF0F1)); // 设置背景色
         buttonPanel.add(removeItemButton);
         buttonPanel.add(clearOrderButton);
         buttonPanel.add(submitOrderButton);
@@ -124,6 +182,7 @@ public class OrderPanel extends JPanel {
         // 总计面板
         JPanel totalPanel = new JPanel(new GridLayout(3, 1, 5, 5));
         totalPanel.setBorder(BorderFactory.createTitledBorder("订单总计"));
+        totalPanel.setBackground(new Color(0xECF0F1)); // 设置背景色
         totalPanel.add(subtotalLabel);
         totalPanel.add(taxLabel);
         totalPanel.add(totalLabel);
@@ -131,10 +190,12 @@ public class OrderPanel extends JPanel {
         // 备注面板
         JPanel notesPanel = new JPanel(new BorderLayout());
         notesPanel.setBorder(BorderFactory.createTitledBorder("订单备注"));
+        notesPanel.setBackground(new Color(0xECF0F1)); // 设置背景色
         notesPanel.add(new JScrollPane(notesArea), BorderLayout.CENTER);
 
         // 右侧信息面板
         JPanel infoPanel = new JPanel(new BorderLayout());
+        infoPanel.setBackground(new Color(0xECF0F1)); // 设置背景色
         infoPanel.add(totalPanel, BorderLayout.NORTH);
         infoPanel.add(notesPanel, BorderLayout.CENTER);
 
@@ -142,6 +203,7 @@ public class OrderPanel extends JPanel {
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
                                              tableScrollPane, infoPanel);
         splitPane.setDividerLocation(500);
+        splitPane.setBorder(BorderFactory.createEmptyBorder()); // 移除分割线边框
 
         add(splitPane, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);

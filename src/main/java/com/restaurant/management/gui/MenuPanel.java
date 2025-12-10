@@ -2,6 +2,7 @@ package com.restaurant.management.gui;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -32,16 +33,22 @@ public class MenuPanel extends JPanel {
     private void initializeComponents() {
         setBorder(new EmptyBorder(10, 10, 10, 10));
         setLayout(new BorderLayout());
+        setBackground(new Color(0xECF0F1)); // 设置背景色
 
         // 初始化组件
         listModel = new DefaultListModel<>();
         menuItemsList = new JList<>(listModel);
         menuItemsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         menuItemsList.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        menuItemsList.setBorder(new LineBorder(new Color(0xBDC3C7), 1, true)); // 添加边框
+        // 设置选中背景色
+        menuItemsList.setSelectionBackground(new Color(0xD6EAF8));
         
         // 分类筛选下拉框
         categoryFilter = new JComboBox<>();
         categoryFilter.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        categoryFilter.setBackground(Color.WHITE);
+        categoryFilter.setBorder(new LineBorder(new Color(0xBDC3C7), 1, true));
         
         // 添加所有分类到筛选器
         categoryFilter.addItem("所有分类");
@@ -56,40 +63,63 @@ public class MenuPanel extends JPanel {
         itemDetails.setEditable(false);
         itemDetails.setWrapStyleWord(true);
         itemDetails.setLineWrap(true);
+        itemDetails.setBorder(new LineBorder(new Color(0xBDC3C7), 1, true));
+        itemDetails.setBackground(Color.WHITE);
         
         // 按钮
         addToOrderButton = new JButton("添加到订单");
         addToOrderButton.setFont(new Font("微软雅黑", Font.BOLD, 14));
-        addToOrderButton.setBackground(new Color(70, 130, 180));
+        addToOrderButton.setBackground(new Color(0x3498DB)); // 蓝色主题
         addToOrderButton.setForeground(Color.WHITE);
+        addToOrderButton.setFocusPainted(false);
+        addToOrderButton.setBorder(BorderFactory.createCompoundBorder(
+            new LineBorder(new Color(0xBDC3C7), 1, true),
+            BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
+        // 添加悬停效果
+        addToOrderButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                addToOrderButton.setBackground(new Color(0x2980B9)); // 深蓝色
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                addToOrderButton.setBackground(new Color(0x3498DB)); // 恢复原色
+            }
+        });
         
         selectedCategoryLabel = new JLabel("当前分类: 所有分类");
         selectedCategoryLabel.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        selectedCategoryLabel.setForeground(new Color(0x2C3E50));
     }
 
     private void setupLayout() {
         // 顶部分类筛选区域
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        topPanel.add(new JLabel("筛选分类:"));
+        topPanel.setBackground(new Color(0xECF0F1)); // 设置背景色
+        topPanel.add(new JLabel("筛选分类:", SwingConstants.LEFT));
         topPanel.add(categoryFilter);
         topPanel.add(selectedCategoryLabel);
         
         // 菜单列表区域
         JScrollPane listScrollPane = new JScrollPane(menuItemsList);
         listScrollPane.setPreferredSize(new Dimension(250, 400));
+        listScrollPane.setBorder(new LineBorder(new Color(0xBDC3C7), 1, true));
         
         // 详情区域
         JScrollPane detailScrollPane = new JScrollPane(itemDetails);
         detailScrollPane.setPreferredSize(new Dimension(300, 200));
+        detailScrollPane.setBorder(new LineBorder(new Color(0xBDC3C7), 1, true));
         
         // 按钮面板
         JPanel buttonPanel = new JPanel(new FlowLayout());
+        buttonPanel.setBackground(new Color(0xECF0F1)); // 设置背景色
         buttonPanel.add(addToOrderButton);
         
         // 主面板布局
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
                                              listScrollPane, detailScrollPane);
         splitPane.setDividerLocation(250);
+        splitPane.setBorder(BorderFactory.createEmptyBorder()); // 移除分割线边框
         
         add(topPanel, BorderLayout.NORTH);
         add(splitPane, BorderLayout.CENTER);
