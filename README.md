@@ -117,6 +117,60 @@ mvn exec:java -Dexec.mainClass="com.restaurant.management.gui.RestaurantManageme
 - 选择支付方式处理支付
 - 打印账单
 
+### 2. 数据库 CRUD 操作功能
+
+系统提供了完整的菜单项数据库管理功能：
+
+#### 创建菜单项 (Create)
+- 使用 `addMenuItem(MenuItem item)` 方法添加新菜品
+- 需要提供菜品名称、类别、价格、描述等信息
+- 示例代码：
+```java
+MenuItem newItem = new MenuItem(0, "新菜品", "主菜", 35.00, "美味的新菜品", null);
+boolean success = dbManager.addMenuItem(newItem);
+if (success) {
+    System.out.println("菜品添加成功");
+}
+```
+
+#### 读取菜单项 (Read)
+- 使用 `getAllMenuItems()` 获取所有可用菜品
+- 使用 `getMenuItemById(int id)` 根据ID获取特定菜品
+- 使用 `getMenuItemsByCategory(String category)` 按类别获取菜品
+- 使用 `searchMenuItems(String searchTerm)` 搜索菜品
+
+#### 更新菜单项 (Update)
+- 使用 `updateMenuItem(MenuItem item)` 更新菜品信息
+- 可以更新菜品名称、类别、价格、描述、可用状态等
+- 示例代码：
+```java
+MenuItem itemToUpdate = dbManager.getMenuItemById(1);
+if (itemToUpdate != null) {
+    itemToUpdate.setName("更新后的菜品名");
+    itemToUpdate.setPrice(39.99);
+    boolean success = dbManager.updateMenuItem(itemToUpdate);
+    if (success) {
+        System.out.println("菜品更新成功");
+    }
+}
+```
+
+#### 删除菜单项 (Delete)
+- 使用 `deleteMenuItem(int itemId)` 根据ID删除菜品
+- 注意：删除操作不可逆，请谨慎使用
+- 示例代码：
+```java
+boolean success = dbManager.deleteMenuItem(1);
+if (success) {
+    System.out.println("菜品删除成功");
+}
+```
+
+#### 搜索功能
+- 系统支持按菜品名称或描述搜索菜品
+- 使用 `searchMenuItems(String searchTerm)` 方法
+- 支持模糊搜索，提高用户体验
+
 ## 项目结构
 
 ```

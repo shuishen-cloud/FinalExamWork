@@ -337,6 +337,92 @@ public class DatabaseManager {
         }
     }
 
+    // 添加新菜单项
+    public boolean addMenuItem(MenuItem item) {
+        String sql = "INSERT INTO menu_items (name, category, price, description, image_path, available) VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, item.getName());
+            ps.setString(2, item.getCategory());
+            ps.setDouble(3, item.getPrice());
+            ps.setString(4, item.getDescription());
+            ps.setString(5, item.getImagePath());
+            ps.setBoolean(6, item.isAvailable());
+            
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // 更新菜单项
+    public boolean updateMenuItem(MenuItem item) {
+        String sql = "UPDATE menu_items SET name = ?, category = ?, price = ?, description = ?, image_path = ?, available = ? WHERE id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, item.getName());
+            ps.setString(2, item.getCategory());
+            ps.setDouble(3, item.getPrice());
+            ps.setString(4, item.getDescription());
+            ps.setString(5, item.getImagePath());
+            ps.setBoolean(6, item.isAvailable());
+            ps.setInt(7, item.getId());
+            
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // 删除菜单项
+    public boolean deleteMenuItem(int itemId) {
+        String sql = "DELETE FROM menu_items WHERE id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, itemId);
+            
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
+
+    // 搜索菜单项
+    public List<MenuItem> searchMenuItems(String searchTerm) {
+        List<MenuItem> menuItems = new ArrayList<>();
+        String sql = "SELECT * FROM menu_items WHERE (name LIKE ? OR description LIKE ?) AND available = TRUE";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            String searchPattern = "%" + searchTerm + "%";
+            ps.setString(1, searchPattern);
+            ps.setString(2, searchPattern);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    MenuItem item = new MenuItem(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("category"),
+                        rs.getDouble("price"),
+                        rs.getString("description"),
+                        rs.getString("image_path")
+                    );
+                    menuItems.add(item);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return menuItems;
+    }
+
     // 关闭数据库连接
     public void closeConnection() {
         if (dataSource != null && !dataSource.isClosed()) {
