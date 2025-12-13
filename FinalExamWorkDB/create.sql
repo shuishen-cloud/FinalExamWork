@@ -1,0 +1,5 @@
+CREATE DATABASE IF NOT EXISTS SimpleAlbumDB
+CHARACTER SET utf8
+COLLATE utf8_general_ci;
+
+USE SimpleAlbumDB;
