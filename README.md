@@ -12,25 +12,93 @@
 ## 系统要求
 
 - Java 8 或更高版本
-- Maven (可选，用于构建)
+- Maven (用于构建和依赖管理)
 
-## 使用方法
+## 数据库配置
 
-### 1. 编译项目
+本系统使用H2数据库作为数据存储，并使用HikariCP作为数据库连接池。
+
+### 数据库配置文件
+
+系统通过 `src/main/resources/database.properties` 文件进行数据库配置：
+
+```properties
+# 数据库连接配置
+db.driver=org.h2.Driver
+db.url=jdbc:h2:./restaurant_db
+db.username=sa
+db.password=
+db.max.connections=10
+db.connection.timeout=30000
+```
+
+### 数据库表结构
+
+系统会自动创建以下数据表：
+
+1. **menu_items** - 存储菜单项信息
+   - id: 菜品ID (主键，自增)
+   - name: 菜品名称
+   - category: 菜品类别
+   - price: 价格
+   - description: 描述
+   - image_path: 图片路径
+   - available: 是否可点 (默认true)
+
+2. **orders** - 存储订单信息
+   - id: 订单ID (主键，自增)
+   - order_time: 下单时间 (默认当前时间)
+   - status: 订单状态
+   - total_amount: 总金额
+
+3. **order_items** - 存储订单详情
+   - id: 订单项ID (主键，自增)
+   - order_id: 订单ID (外键)
+   - menu_item_id: 菜品ID (外键)
+   - quantity: 数量
+   - notes: 备注
+
+### 数据库初始化
+
+系统启动时会自动创建数据库表结构，并在菜单表为空时插入示例数据，包括：
+- 开胃菜：宫保鸡丁、凉拌黄瓜
+- 主菜：红烧肉、麻婆豆腐、清蒸鲈鱼
+- 饮料：可乐、橙汁
+- 甜点：红豆沙
+
+## 启动方式
+
+### 方法一：使用Maven（推荐）
+
+```bash
+# 编译并运行
+mvn compile exec:java -Dexec.mainClass="com.restaurant.management.gui.RestaurantManagementSystem"
+
+# 或者先打包再运行
+mvn package
+java -jar target/restaurant-ordering-system-1.0-SNAPSHOT.jar
+```
+
+### 方法二：直接编译运行
 
 ```bash
 # 编译Java文件
 javac -d target/classes -cp ".:lib/*" src/main/java/com/restaurant/management/gui/*.java
-```
 
-### 2. 运行应用程序
-
-```bash
-# 运行餐厅点餐管理系统
+# 运行应用程序
 java -cp "target/classes:lib/*" com.restaurant.management.gui.RestaurantManagementSystem
 ```
 
-### 3. 系统功能使用
+### 方法三：使用Maven运行插件
+
+```bash
+# 使用Maven exec插件运行
+mvn exec:java -Dexec.mainClass="com.restaurant.management.gui.RestaurantManagementSystem"
+```
+
+## 使用方法
+
+### 1. 系统功能使用
 
 #### 菜单浏览
 - 通过顶部下拉菜单选择分类筛选菜品
@@ -73,7 +141,9 @@ src/
 
 - Java Swing (GUI界面)
 - H2 Database (数据存储)
-- JDBC (数据库连接)
+- HikariCP (数据库连接池)
+- SLF4J (日志框架)
+- Maven (项目构建)
 
 ## 开发说明
 
