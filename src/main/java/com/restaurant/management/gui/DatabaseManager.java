@@ -1,44 +1,61 @@
 package com.restaurant.management.gui;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * 数据库管理类
  */
 public class DatabaseManager {
-    private static final String DB_URL = "jdbc:h2:./restaurant_db";  // 使用H2数据库，存储在本地文件
-    private static final String DB_USER = "sa";
-    private static final String DB_PASSWORD = "";
+    private static HikariDataSource dataSource;
 
-    private Connection connection;
-
-    public DatabaseManager() {
+    static {
         try {
-            // 加载H2数据库驱动
-            Class.forName("org.h2.Driver");
-            connect();
-            initializeDatabase();
-        } catch (ClassNotFoundException | SQLException e) {
+            // 加载配置文件
+            Properties props = new Properties();
+            try (InputStream input = DatabaseManager.class.getClassLoader().getResourceAsStream("database.properties")) {
+                if (input == null) {
+                    throw new IOException("无法找到 database.properties 配置文件");
+                }
+                props.load(input);
+            }
+
+            // 配置 HikariCP 连接池
+            HikariConfig config = new HikariConfig();
+            config.setDriverClassName(props.getProperty("db.driver", "org.h2.Driver"));
+            config.setJdbcUrl(props.getProperty("db.url", "jdbc:h2:./restaurant_db"));
+            config.setUsername(props.getProperty("db.username", "sa"));
+            config.setPassword(props.getProperty("db.password", ""));
+            config.setMaximumPoolSize(Integer.parseInt(props.getProperty("db.max.connections", "10")));
+            config.setConnectionTimeout(Long.parseLong(props.getProperty("db.connection.timeout", "30000")));
+            
+            // 其他连接池配置
+            config.setMinimumIdle(2);
+            config.setIdleTimeout(600000);
+            config.setMaxLifetime(1800000);
+            config.setLeakDetectionThreshold(60000);
+
+            dataSource = new HikariDataSource(config);
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    // 连接数据库
-    public void connect() throws SQLException {
-        connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+    public DatabaseManager() {
+        initializeDatabase();
     }
 
     // 初始化数据库表
     public void initializeDatabase() {
-        try {
-            Statement statement = connection.createStatement();
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement()) {
 
             // 创建菜单项表
             String createMenuItemsTable = "CREATE TABLE IF NOT EXISTS menu_items (" +
@@ -71,21 +88,20 @@ public class DatabaseManager {
             statement.execute(createOrderItemsTable);
 
             // 插入一些示例菜单数据（如果表为空）
-            ResultSet rs = statement.executeQuery("SELECT COUNT(*) FROM menu_items");
-            rs.next();
-            int count = rs.getInt(1);
-            if (count == 0) {
-                insertSampleMenuItems(statement);
+            try (ResultSet rs = statement.executeQuery("SELECT COUNT(*) FROM menu_items")) {
+                rs.next();
+                int count = rs.getInt(1);
+                if (count == 0) {
+                    insertSampleMenuItems(connection);
+                }
             }
-
-            statement.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
     // 插入示例菜单项
-    private void insertSampleMenuItems(Statement statement) {
+    private void insertSampleMenuItems(Connection connection) {
         try {
             String sql = "INSERT INTO menu_items (name, category, price, description) VALUES (?, ?, ?, ?)";
             
@@ -152,9 +168,9 @@ public class DatabaseManager {
     // 获取所有菜单项
     public List<MenuItem> getAllMenuItems() {
         List<MenuItem> menuItems = new ArrayList<>();
-        try {
-            Statement statement = connection.createStatement();
-            ResultSet rs = statement.executeQuery("SELECT * FROM menu_items WHERE available = TRUE");
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery("SELECT * FROM menu_items WHERE available = TRUE")) {
             
             while (rs.next()) {
                 MenuItem item = new MenuItem(
@@ -167,9 +183,6 @@ public class DatabaseManager {
                 );
                 menuItems.add(item);
             }
-            
-            rs.close();
-            statement.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -179,26 +192,22 @@ public class DatabaseManager {
     // 按类别获取菜单项
     public List<MenuItem> getMenuItemsByCategory(String category) {
         List<MenuItem> menuItems = new ArrayList<>();
-        try {
-            String sql = "SELECT * FROM menu_items WHERE category = ? AND available = TRUE";
-            PreparedStatement ps = connection.prepareStatement(sql);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement("SELECT * FROM menu_items WHERE category = ? AND available = TRUE")) {
             ps.setString(1, category);
-            ResultSet rs = ps.executeQuery();
-            
-            while (rs.next()) {
-                MenuItem item = new MenuItem(
-                    rs.getInt("id"),
-                    rs.getString("name"),
-                    rs.getString("category"),
-                    rs.getDouble("price"),
-                    rs.getString("description"),
-                    rs.getString("image_path")
-                );
-                menuItems.add(item);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    MenuItem item = new MenuItem(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("category"),
+                        rs.getDouble("price"),
+                        rs.getString("description"),
+                        rs.getString("image_path")
+                    );
+                    menuItems.add(item);
+                }
             }
-            
-            rs.close();
-            ps.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -208,9 +217,9 @@ public class DatabaseManager {
     // 获取所有订单
     public List<Order> getAllOrders() {
         List<Order> orders = new ArrayList<>();
-        try {
-            Statement statement = connection.createStatement();
-            ResultSet rs = statement.executeQuery("SELECT * FROM orders ORDER BY order_time DESC");
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery("SELECT * FROM orders ORDER BY order_time DESC")) {
             
             while (rs.next()) {
                 Order order = new Order(rs.getInt("id"));
@@ -223,9 +232,6 @@ public class DatabaseManager {
                 
                 orders.add(order);
             }
-            
-            rs.close();
-            statement.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -235,27 +241,23 @@ public class DatabaseManager {
     // 获取指定订单的订单项
     public List<OrderItem> getOrderItemsByOrderId(int orderId) {
         List<OrderItem> orderItems = new ArrayList<>();
-        try {
-            String sql = "SELECT * FROM order_items WHERE order_id = ?";
-            PreparedStatement ps = connection.prepareStatement(sql);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement("SELECT * FROM order_items WHERE order_id = ?")) {
             ps.setInt(1, orderId);
-            ResultSet rs = ps.executeQuery();
-            
-            while (rs.next()) {
-                int menuItemId = rs.getInt("menu_item_id");
-                int quantity = rs.getInt("quantity");
-                String notes = rs.getString("notes");
-                
-                // 获取菜单项详情
-                MenuItem menuItem = getMenuItemById(menuItemId);
-                if (menuItem != null) {
-                    OrderItem orderItem = new OrderItem(menuItem, quantity, notes);
-                    orderItems.add(orderItem);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int menuItemId = rs.getInt("menu_item_id");
+                    int quantity = rs.getInt("quantity");
+                    String notes = rs.getString("notes");
+                    
+                    // 获取菜单项详情
+                    MenuItem menuItem = getMenuItemById(menuItemId);
+                    if (menuItem != null) {
+                        OrderItem orderItem = new OrderItem(menuItem, quantity, notes);
+                        orderItems.add(orderItem);
+                    }
                 }
             }
-            
-            rs.close();
-            ps.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -264,28 +266,21 @@ public class DatabaseManager {
 
     // 根据ID获取菜单项
     public MenuItem getMenuItemById(int id) {
-        try {
-            String sql = "SELECT * FROM menu_items WHERE id = ?";
-            PreparedStatement ps = connection.prepareStatement(sql);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement("SELECT * FROM menu_items WHERE id = ?")) {
             ps.setInt(1, id);
-            ResultSet rs = ps.executeQuery();
-            
-            if (rs.next()) {
-                MenuItem item = new MenuItem(
-                    rs.getInt("id"),
-                    rs.getString("name"),
-                    rs.getString("category"),
-                    rs.getDouble("price"),
-                    rs.getString("description"),
-                    rs.getString("image_path")
-                );
-                rs.close();
-                ps.close();
-                return item;
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new MenuItem(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("category"),
+                        rs.getDouble("price"),
+                        rs.getString("description"),
+                        rs.getString("image_path")
+                    );
+                }
             }
-            
-            rs.close();
-            ps.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -294,35 +289,49 @@ public class DatabaseManager {
 
     // 保存订单到数据库
     public void saveOrder(Order order) {
-        try {
-            // 插入订单主表
-            String orderSql = "INSERT INTO orders (status, total_amount) VALUES (?, ?)";
-            PreparedStatement orderPs = connection.prepareStatement(orderSql, Statement.RETURN_GENERATED_KEYS);
-            orderPs.setString(1, order.getStatus());
-            orderPs.setDouble(2, order.getTotal());
+        try (Connection connection = dataSource.getConnection()) {
+            // 开启事务
+            connection.setAutoCommit(false);
             
-            int affectedRows = orderPs.executeUpdate();
-            if (affectedRows > 0) {
-                ResultSet generatedKeys = orderPs.getGeneratedKeys();
-                if (generatedKeys.next()) {
-                    int orderId = generatedKeys.getInt(1);
-                    order.setOrderId(orderId);
+            try {
+                // 插入订单主表
+                String orderSql = "INSERT INTO orders (status, total_amount) VALUES (?, ?)";
+                try (PreparedStatement orderPs = connection.prepareStatement(orderSql, Statement.RETURN_GENERATED_KEYS)) {
+                    orderPs.setString(1, order.getStatus());
+                    orderPs.setDouble(2, order.getTotal());
                     
-                    // 插入订单项表
-                    for (OrderItem item : order.getItems()) {
-                        String itemSql = "INSERT INTO order_items (order_id, menu_item_id, quantity, notes) VALUES (?, ?, ?, ?)";
-                        PreparedStatement itemPs = connection.prepareStatement(itemSql);
-                        itemPs.setInt(1, orderId);
-                        itemPs.setInt(2, item.getMenuItem().getId());
-                        itemPs.setInt(3, item.getQuantity());
-                        itemPs.setString(4, item.getNotes());
-                        itemPs.executeUpdate();
-                        itemPs.close();
+                    int affectedRows = orderPs.executeUpdate();
+                    if (affectedRows > 0) {
+                        try (ResultSet generatedKeys = orderPs.getGeneratedKeys()) {
+                            if (generatedKeys.next()) {
+                                int orderId = generatedKeys.getInt(1);
+                                order.setOrderId(orderId);
+                                
+                                // 插入订单项表
+                                String itemSql = "INSERT INTO order_items (order_id, menu_item_id, quantity, notes) VALUES (?, ?, ?, ?)";
+                                try (PreparedStatement itemPs = connection.prepareStatement(itemSql)) {
+                                    for (OrderItem item : order.getItems()) {
+                                        itemPs.setInt(1, orderId);
+                                        itemPs.setInt(2, item.getMenuItem().getId());
+                                        itemPs.setInt(3, item.getQuantity());
+                                        itemPs.setString(4, item.getNotes());
+                                        itemPs.executeUpdate();
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-                generatedKeys.close();
+                
+                // 提交事务
+                connection.commit();
+            } catch (SQLException e) {
+                // 回滚事务
+                connection.rollback();
+                throw e;
+            } finally {
+                connection.setAutoCommit(true);
             }
-            orderPs.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -330,12 +339,8 @@ public class DatabaseManager {
 
     // 关闭数据库连接
     public void closeConnection() {
-        try {
-            if (connection != null && !connection.isClosed()) {
-                connection.close();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        if (dataSource != null && !dataSource.isClosed()) {
+            dataSource.close();
         }
     }
 }

@@ -18,22 +18,81 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
-    <dependencies>
-        <!-- H2数据库 -->
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <version>2.2.224</version>
-        </dependency>
+                <dependencies>
+
         
-        <!-- 用于测试的JUnit -->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.2</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+
+                    <!-- H2数据库 -->
+
+                    <dependency>
+
+                        <groupId>com.h2database</groupId>
+
+                        <artifactId>h2</artifactId>
+
+                        <version>2.2.224</version>
+
+                    </dependency>
+
+        
+
+                    <!-- HikariCP 数据库连接池 -->
+
+                    <dependency>
+
+                        <groupId>com.zaxxer</groupId>
+
+                        <artifactId>HikariCP</artifactId>
+
+                        <version>5.0.1</version>
+
+                    </dependency>
+
+        
+
+                    <!-- SLF4J API -->
+
+                    <dependency>
+
+                        <groupId>org.slf4j</groupId>
+
+                        <artifactId>slf4j-api</artifactId>
+
+                        <version>2.0.7</version>
+
+                    </dependency>
+
+        
+
+                    <!-- SLF4J Simple 实现 -->
+
+                    <dependency>
+
+                        <groupId>org.slf4j</groupId>
+
+                        <artifactId>slf4j-simple</artifactId>
+
+                        <version>2.0.7</version>
+
+                    </dependency>
+
+        
+
+                    <!-- 用于测试的JUnit -->
+
+                    <dependency>
+
+                        <groupId>junit</groupId>
+
+                        <artifactId>junit</artifactId>
+
+                        <version>4.13.2</version>
+
+                        <scope>test</scope>
+
+                    </dependency>
+
+                </dependencies>
 
     <build>
         <plugins>
