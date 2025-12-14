@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">
+  <!-- 定义样式 -->
+  <style>
+    .entity { fill: #d1e8ff; stroke: #0066cc; stroke-width: 2; }
+    .attribute { fill: #f0f8ff; stroke: #6699cc; stroke-width: 1.5; }
+    .pk { fill: #ffebee; stroke: #f44336; stroke-width: 1.5; font: italic 14px sans-serif; }
+    .fk { fill: #e8f5e9; stroke: #4caf50; stroke-width: 1.5; font: italic 14px sans-serif; }
+    .relationship { fill: #fff3e0; stroke: #ff9800; stroke-width: 2; }
+    .attribute-text { font: 14px sans-serif; fill: #37474f; text-anchor: middle; }
+    .pk-text { font: italic bold 14px sans-serif; fill: #d32f2f; text-anchor: middle; }
+    .fk-text { font: italic bold 14px sans-serif; fill: #388e3c; text-anchor: middle; }
+    .entity-text { font: bold 16px sans-serif; fill: #0d47a1; text-anchor: middle; }
+    .relation { stroke: #f57c00; stroke-width: 2; marker-end: url(#arrowhead); }
+    .cardinality { font: bold 14px sans-serif; fill: #f57c00; text-anchor: middle; }
+  </style>
+
+  <!-- 定义箭头标记 -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+      refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#f57c00" />
+    </marker>
+  </defs>
+
+  <!-- User实体 -->
+  <g id="user_entity" transform="translate(300, 200)">
+    <!-- 实体矩形 -->
+    <rect class="entity" width="200" height="60" x="-100" y="-30" rx="8" ry="8"/>
+    <text x="0" y="5" class="entity-text">User</text>
+    
+    <!-- 主键属性 -->
+    <ellipse class="pk" rx="70" ry="15" cx="0" cy="-100"/>
+    <text x="0" y="-95" class="pk-text">UserID (PK)</text>
+    
+    <!-- 普通属性 -->
+    <ellipse class="attribute" rx="70" ry="15" cx="-150" cy="-60"/>
+    <text x="-150" y="-55" class="attribute-text">UserName</text>
+    
+    <ellipse class="attribute" rx="70" ry="15" cx="-150" cy="-25"/>
+    <text x="-150" y="-20" class="attribute-text">Password</text>
+    
+    <ellipse class="attribute" rx="70" ry="15" cx="-150" cy="10"/>
+    <text x="-150" y="15" class="attribute-text">NickName</text>
+    
+    <ellipse class="attribute" rx="70" ry="15" cx="150" cy="-60"/>
+    <text x="150" y="-55" class="attribute-text">RemainingStorage</text>
+    
+    <ellipse class="attribute" rx="70" ry="15" cx="150" cy="-25"/>
+    <text x="150" y="-20" class="attribute-text">Role</text>
+    
+    <ellipse class="attribute" rx="70" ry="15" cx="150" cy="10"/>
+    <text x="150" y="15" class="attribute-text">CreateTime</text>
+    
+    <ellipse class="attribute" rx="70" ry="15" cx="0" cy="80"/>
+    <text x="0" y="85" class="attribute-text">UpdateTime</text>
+  </g>
+
+  <!-- Resource实体 -->
+  <g id="resource_entity" transform="translate(800, 200)">
+    <!-- 实体矩形 -->
+    <rect class="entity" width="200" height="60" x="-100" y="-30" rx="8" ry="8"/>
+    <text x="0" y="5" class="entity-text">Resource</text>
+    
+    <!-- 主键属性 -->
+    <ellipse class="pk" rx="70" ry="15" cx="0" cy="-100"/>
+    <text x="0" y="-95" class="pk-text">ResID (PK)</text>
+    
+    <!-- 外键属性 -->
+    <ellipse class="fk" rx="70" ry="15" cx="-150" cy="-60"/>
+    <text x="-150" y="-55" class="fk-text">UserID (FK)</text>
+    
+    <!-- 普通属性 -->
+    <ellipse class="attribute" rx="70" ry="15" cx="-150" cy="-25"/>
+    <text x="-150" y="-20" class="attribute-text">ResType</text>
+    
+    <ellipse class="attribute" rx="70" ry="15" cx="-150" cy="10"/>
+    <text x="-150" y="15" class="attribute-text">RelateID</text>
+    
+    <ellipse class="attribute" rx="70" ry="15" cx="150" cy="-60"/>
+    <text x="150" y="-55" class="attribute-text">NameLink</text>
+    
+    <ellipse class="attribute" rx="70" ry="15" cx="150" cy="-25"/>
+    <text x="150" y="-20" class="attribute-text">Ext1</text>
+    
+    <ellipse class="attribute" rx="70" ry="15" cx="150" cy="10"/>
+    <text x="150" y="15" class="attribute-text">Ext2</text>
+    
+    <ellipse class="attribute" rx="70" ry="15" cx="0" cy="80"/>
+    <text x="0" y="85" class="attribute-text">Ext3</text>
+    
+    <ellipse class="attribute" rx="70" ry="15" cx="0" cy="115"/>
+    <text x="0" y="120" class="attribute-text">CreateTime</text>
+    
+    <ellipse class="attribute" rx="70" ry="15" cx="0" cy="150"/>
+    <text x="0" y="155" class="attribute-text">UpdateTime</text>
+  </g>
+
+  <!-- 关系菱形 -->
+  <g id="has_relationship" transform="translate(550, 200)">
+    <polygon class="relationship" points="0,-30 40,0 0,30 -40,0"/>
+    <text x="0" y="5" class="entity-text">Has</text>
+  </g>
+
+  <!-- 连接线 -->
+  <!-- User到关系 -->
+  <line x1="400" y1="200" x2="510" y2="200" class="relation"/>
+  <!-- 关系到Resource -->
+  <line x1="590" y1="200" x2="700" y2="200" class="relation"/>
+  
+  <!-- 基数 -->
+  <text x="460" y="190" class="cardinality">1</text>
+  <text x="740" y="190" class="cardinality">N</text>
+  
+  <!-- 标题 -->
+  <text x="600" y="50" text-anchor="middle" font-size="24" font-weight="bold" fill="#0d47a1">
+    相册管理系统数据库E-R图
+  </text>
+  
+  <!-- 图例 -->
+  <g transform="translate(50, 500)">
+    <rect width="250" height="160" fill="none" stroke="black" stroke-width="1"/>
+    <text x="125" y="25" text-anchor="middle" font-weight="bold" fill="#37474f" font-size="16">图例</text>
+    <rect x="20" y="40" width="30" height="20" class="entity"/>
+    <text x="70" y="55" font="14px sans-serif" fill="#37474f">实体</text>
+    <ellipse cx="35" cy="80" rx="20" ry="10" class="attribute"/>
+    <text x="70" y="85" font="14px sans-serif" fill="#37474f">属性</text>
+    <ellipse cx="35" cy="110" rx="20" ry="10" class="pk"/>
+    <text x="70" y="115" font="14px sans-serif" fill="#37474f">主键</text>
+    <ellipse cx="35" cy="140" rx="20" ry="10" class="fk"/>
+    <text x="70" y="145" font="14px sans-serif" fill="#37474f">外键</text>
+    <polygon points="-15,0 0,10 15,0 0,-10" transform="translate(35,165)" class="relationship"/>
+    <text x="70" y="170" font="14px sans-serif" fill="#37474f">关系</text>
+  </g>
+  
+  <!-- 说明文字 -->
+  <text x="600" y="700" text-anchor="middle" fill="#666" font-size="14">
+    用户(User) 与 资源(Resource) 之间是一对多关系
+  </text>
+  <text x="600" y="730" text-anchor="middle" fill="#666" font-size="14">
+    一个用户可以拥有多个资源(相册、照片、分享链接)，一个资源只能属于一个用户
+  </text>
+</svg>
