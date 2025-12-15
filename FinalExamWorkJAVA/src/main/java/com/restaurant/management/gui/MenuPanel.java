@@ -20,6 +20,7 @@ public class MenuPanel extends JPanel {
     private JTextArea itemDetails;
     private JButton addToOrderButton;
     private JLabel selectedCategoryLabel;
+    private JLabel tableInfoLabel;  // 餐桌信息标签
 
     private OrderPanel orderPanel;
 
@@ -93,15 +94,33 @@ public class MenuPanel extends JPanel {
         selectedCategoryLabel = new JLabel("当前分类: 所有分类");
         selectedCategoryLabel.setFont(new Font("微软雅黑", Font.PLAIN, 14));
         selectedCategoryLabel.setForeground(new Color(0x2C3E50));
+        
+        // 餐桌信息标签
+        tableInfoLabel = new JLabel("餐桌信息: 未选择餐桌");
+        tableInfoLabel.setFont(new Font("微软雅黑", Font.PLAIN, 12));
+        tableInfoLabel.setForeground(new Color(0x2C3E50));
+        tableInfoLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     }
 
     private void setupLayout() {
         // 顶部分类筛选区域
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBackground(new Color(0xECF0F1)); // 设置背景色
-        topPanel.add(new JLabel("筛选分类:", SwingConstants.LEFT));
-        topPanel.add(categoryFilter);
-        topPanel.add(selectedCategoryLabel);
+        
+        // 左侧分类筛选
+        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        filterPanel.setBackground(new Color(0xECF0F1)); // 设置背景色
+        filterPanel.add(new JLabel("筛选分类:", SwingConstants.LEFT));
+        filterPanel.add(categoryFilter);
+        filterPanel.add(selectedCategoryLabel);
+        
+        // 右侧餐桌信息
+        JPanel tableInfoPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        tableInfoPanel.setBackground(new Color(0xECF0F1)); // 设置背景色
+        tableInfoPanel.add(tableInfoLabel);
+        
+        topPanel.add(filterPanel, BorderLayout.CENTER);
+        topPanel.add(tableInfoPanel, BorderLayout.EAST);
         
         // 菜单列表区域
         JScrollPane listScrollPane = new JScrollPane(menuItemsList);
@@ -212,8 +231,30 @@ public class MenuPanel extends JPanel {
             return;
         }
 
+        // 检查当前订单是否关联了餐桌
+        if (currentOrder.getTableId() <= 0) {
+            int choice = JOptionPane.showConfirmDialog(this,
+                "当前订单未关联餐桌，是否继续添加菜品？\n" +
+                "选择“是”将把菜品添加到未分配餐桌的订单中。\n" +
+                "选择“否”将返回订单面板先选择餐桌。",
+                "餐桌未选择",
+                JOptionPane.YES_NO_OPTION);
+            
+            if (choice == JOptionPane.NO_OPTION) {
+                // 提示用户转到订单面板选择餐桌
+                JOptionPane.showMessageDialog(this,
+                    "请到订单管理面板中选择餐桌后再添加菜品。",
+                    "提示",
+                    JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+        }
+
         // 弹出对话框获取数量
-        String quantityStr = JOptionPane.showInputDialog(this, "请输入数量:", "1");
+        String quantityStr = JOptionPane.showInputDialog(this, 
+            "请输入数量 (餐桌: " + 
+            (currentOrder.getTableId() > 0 ? "餐桌 #" + currentOrder.getTableId() : "未分配") + "):", 
+            "1");
         if (quantityStr == null) {
             return; // 用户取消
         }
@@ -235,7 +276,8 @@ public class MenuPanel extends JPanel {
             }
             
             JOptionPane.showMessageDialog(this, 
-                selectedItem.getName() + " 已添加到订单 (数量: " + quantity + ")", 
+                selectedItem.getName() + " 已添加到订单 (数量: " + quantity + 
+                ", 餐桌: " + (currentOrder.getTableId() > 0 ? "餐桌 #" + currentOrder.getTableId() : "未分配") + ")", 
                 "成功", 
                 JOptionPane.INFORMATION_MESSAGE);
                 
@@ -245,9 +287,25 @@ public class MenuPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "请输入有效的数量", "错误", JOptionPane.ERROR_MESSAGE);
         }
     }
+    
+    // 刷新餐桌信息显示
+    public void refreshTableInfo() {
+        if (currentOrder != null && currentOrder.getTableId() > 0) {
+            TableManager tableManager = new TableManager(dbManager);
+            Table table = tableManager.getTableById(currentOrder.getTableId());
+            if (table != null) {
+                tableInfoLabel.setText("餐桌信息: " + table.getTableName() + " (ID: " + table.getTableId() + ", 容量: " + table.getCapacity() + "人)");
+            } else {
+                tableInfoLabel.setText("餐桌信息: ID " + currentOrder.getTableId() + " (餐桌信息不可用)");
+            }
+        } else {
+            tableInfoLabel.setText("餐桌信息: 未选择餐桌");
+        }
+    }
 
     // 刷新面板
     public void refresh() {
         loadMenuItems();
+        refreshTableInfo();  // 更新餐桌信息
     }
 }

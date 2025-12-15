@@ -161,7 +161,13 @@ public class RestaurantManagementSystem extends JFrame {
         
         // 视图菜单项事件
         tableSelectionViewItem.addActionListener(e -> tabbedPane.setSelectedIndex(0));
-        menuViewItem.addActionListener(e -> tabbedPane.setSelectedIndex(1));
+        menuViewItem.addActionListener(e -> {
+            tabbedPane.setSelectedIndex(1);
+            // 切换到菜单面板时，更新餐桌信息显示
+            if (menuPanel != null) {
+                menuPanel.refreshTableInfo();
+            }
+        });
         orderViewItem.addActionListener(e -> tabbedPane.setSelectedIndex(2));
         billViewItem.addActionListener(e -> tabbedPane.setSelectedIndex(3));
         
