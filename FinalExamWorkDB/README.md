@@ -70,6 +70,20 @@
 - CreateTime: DATETIME，创建时间
 - UpdateTime: TIMESTAMP，更新时间
 
+**BackupLog表（备份日志表）**
+- LogID: INT，主键，自动递增
+- BackupDate: DATETIME，备份日期
+- Status: VARCHAR(50)，备份状态
+- Message: TEXT，备份消息详情
+
+### 数据库构成
+
+该相册管理系统数据库由3张表构成：
+
+1. **Users表**：用户信息表，存储系统用户的基本信息，包括用户名、密码、存储容量和角色等。
+2. **Resource表**：资源表，存储所有相册、照片和分享链接资源，采用LIST分区策略按资源类型分区。
+3. **BackupLog表**：备份日志表，记录数据库备份操作的日志信息。
+
 ### 分区策略
 
 Resource表采用LIST分区，按ResType字段分区：
