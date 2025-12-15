@@ -412,17 +412,20 @@ public class BillPanel extends JPanel {
         );
         
         if (result == JOptionPane.YES_OPTION) {
+            // 保存订单ID用于后续显示
+            int orderId = selectedOrder.getOrderId();
+            
             // 更新订单状态
             selectedOrder.setStatus("已完成");
             
-            // 在实际应用中，这里会更新数据库
-            // 暂时我们只更新本地订单对象
+            // 保存订单到数据库以更新状态
+            dbManager.saveOrder(selectedOrder);
             
             // 刷新界面
             refreshBillList();
             
             JOptionPane.showMessageDialog(this, 
-                "支付成功！\n订单号: " + selectedOrder.getOrderId() + 
+                "支付成功！\n订单号: " + orderId + 
                 "\n支付方式: " + paymentMethod + 
                 "\n金额: ¥" + String.format("%.2f", total), 
                 "支付成功", 

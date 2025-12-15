@@ -230,6 +230,9 @@ public class DatabaseManager {
                 List<OrderItem> orderItems = getOrderItemsByOrderId(order.getOrderId());
                 order.setItems(orderItems);
                 
+                // 计算订单总额
+                order.calculateTotals();
+                
                 orders.add(order);
             }
         } catch (SQLException e) {
