@@ -68,12 +68,21 @@ public class DatabaseManager {
                     "available BOOLEAN DEFAULT TRUE)";
             statement.execute(createMenuItemsTable);
 
+            // 创建餐桌表
+            String createTablesTable = "CREATE TABLE IF NOT EXISTS tables (" +
+                    "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                    "table_name VARCHAR(100) NOT NULL, " +
+                    "capacity INT NOT NULL, " +
+                    "status VARCHAR(50) NOT NULL DEFAULT '空闲')";
+            statement.execute(createTablesTable);
+
             // 创建订单表
             String createOrdersTable = "CREATE TABLE IF NOT EXISTS orders (" +
                     "id INT AUTO_INCREMENT PRIMARY KEY, " +
                     "order_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
                     "status VARCHAR(50) NOT NULL, " +
-                    "total_amount DECIMAL(10,2) NOT NULL)";
+                    "total_amount DECIMAL(10,2) NOT NULL, " +
+                    "table_id INT DEFAULT 0)";
             statement.execute(createOrdersTable);
 
             // 创建订单项表
@@ -87,6 +96,38 @@ public class DatabaseManager {
                     "FOREIGN KEY (menu_item_id) REFERENCES menu_items(id))";
             statement.execute(createOrderItemsTable);
 
+            // 检查orders表是否已有table_id列，如果没有则添加
+            boolean tableIdColumnExists = false;
+            try (ResultSet rs = connection.getMetaData().getColumns(null, null, "ORDERS", "TABLE_ID")) {
+                if (rs.next()) {
+                    tableIdColumnExists = true;
+                }
+            }
+            if (!tableIdColumnExists) {
+                statement.execute("ALTER TABLE orders ADD COLUMN table_id INT DEFAULT 0");
+            }
+            
+            // 检查tables表是否已有check_in_time和check_out_time列，如果没有则添加
+            boolean checkInColumnExists = false;
+            try (ResultSet rs = connection.getMetaData().getColumns(null, null, "TABLES", "CHECK_IN_TIME")) {
+                if (rs.next()) {
+                    checkInColumnExists = true;
+                }
+            }
+            if (!checkInColumnExists) {
+                statement.execute("ALTER TABLE tables ADD COLUMN check_in_time TIMESTAMP NULL");
+            }
+            
+            boolean checkOutColumnExists = false;
+            try (ResultSet rs = connection.getMetaData().getColumns(null, null, "TABLES", "CHECK_OUT_TIME")) {
+                if (rs.next()) {
+                    checkOutColumnExists = true;
+                }
+            }
+            if (!checkOutColumnExists) {
+                statement.execute("ALTER TABLE tables ADD COLUMN check_out_time TIMESTAMP NULL");
+            }
+            
             // 插入一些示例菜单数据（如果表为空）
             try (ResultSet rs = statement.executeQuery("SELECT COUNT(*) FROM menu_items")) {
                 rs.next();
@@ -95,11 +136,57 @@ public class DatabaseManager {
                     insertSampleMenuItems(connection);
                 }
             }
+            
+            // 插入一些示例餐桌数据（如果表为空）
+            try (ResultSet rs = statement.executeQuery("SELECT COUNT(*) FROM tables")) {
+                rs.next();
+                int count = rs.getInt(1);
+                if (count == 0) {
+                    insertSampleTables(connection);
+                }
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
+    // 插入示例餐桌
+    private void insertSampleTables(Connection connection) {
+        try {
+            String sql = "INSERT INTO tables (table_name, capacity, status) VALUES (?, ?, ?)";
+            
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                // 添加几张餐桌
+                ps.setString(1, "餐桌 1");
+                ps.setInt(2, 4);
+                ps.setString(3, "空闲");
+                ps.executeUpdate();
+                
+                ps.setString(1, "餐桌 2");
+                ps.setInt(2, 4);
+                ps.setString(3, "空闲");
+                ps.executeUpdate();
+                
+                ps.setString(1, "餐桌 3");
+                ps.setInt(2, 6);
+                ps.setString(3, "空闲");
+                ps.executeUpdate();
+                
+                ps.setString(1, "餐桌 4");
+                ps.setInt(2, 8);
+                ps.setString(3, "空闲");
+                ps.executeUpdate();
+                
+                ps.setString(1, "餐桌 5");
+                ps.setInt(2, 2);
+                ps.setString(3, "空闲");
+                ps.executeUpdate();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
     // 插入示例菜单项
     private void insertSampleMenuItems(Connection connection) {
         try {
@@ -225,6 +312,7 @@ public class DatabaseManager {
                 Order order = new Order(rs.getInt("id"));
                 order.setOrderTime(rs.getTimestamp("order_time"));
                 order.setStatus(rs.getString("status"));
+                order.setTableId(rs.getInt("table_id")); // 从数据库读取餐桌ID
                 
                 // 获取订单项
                 List<OrderItem> orderItems = getOrderItemsByOrderId(order.getOrderId());
@@ -298,10 +386,11 @@ public class DatabaseManager {
             
             try {
                 // 插入订单主表
-                String orderSql = "INSERT INTO orders (status, total_amount) VALUES (?, ?)";
+                String orderSql = "INSERT INTO orders (status, total_amount, table_id) VALUES (?, ?, ?)";
                 try (PreparedStatement orderPs = connection.prepareStatement(orderSql, Statement.RETURN_GENERATED_KEYS)) {
                     orderPs.setString(1, order.getStatus());
                     orderPs.setDouble(2, order.getTotal());
+                    orderPs.setInt(3, order.getTableId());  // 添加餐桌ID
                     
                     int affectedRows = orderPs.executeUpdate();
                     if (affectedRows > 0) {
@@ -426,6 +515,11 @@ public class DatabaseManager {
         return menuItems;
     }
 
+    // 获取数据源
+    public HikariDataSource getDataSource() {
+        return dataSource;
+    }
+    
     // 关闭数据库连接
     public void closeConnection() {
         if (dataSource != null && !dataSource.isClosed()) {

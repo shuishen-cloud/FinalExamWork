@@ -15,6 +15,7 @@ public class Order {
     private double subtotal;          // 小计
     private double tax;               // 税费
     private double total;             // 总计
+    private int tableId;              // 关联的餐桌ID
     private static final double TAX_RATE = 0.1;  // 税率10%
 
     // 构造函数
@@ -26,6 +27,13 @@ public class Order {
         this.subtotal = 0.0;
         this.tax = 0.0;
         this.total = 0.0;
+        this.tableId = 0;  // 默认餐桌ID为0，表示未分配餐桌
+    }
+    
+    // 带餐桌ID的构造函数
+    public Order(int orderId, int tableId) {
+        this(orderId);
+        this.tableId = tableId;
     }
 
     // Getter和Setter方法
@@ -71,6 +79,14 @@ public class Order {
 
     public double getTotal() {
         return total;
+    }
+
+    public int getTableId() {
+        return tableId;
+    }
+
+    public void setTableId(int tableId) {
+        this.tableId = tableId;
     }
 
     // 添加订单项

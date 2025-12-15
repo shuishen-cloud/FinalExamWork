@@ -7,6 +7,7 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 /**
@@ -14,11 +15,13 @@ import java.util.List;
  */
 public class BillPanel extends JPanel {
     private DatabaseManager dbManager;
+    private TableManager tableManager;
     private JTable billTable;
     private DefaultTableModel tableModel;
     private JTextArea billDetailsArea;
     private JButton printBillButton;
     private JButton payBillButton;
+    private JButton customerLeaveButton;  // 客户离开按钮
     private JButton refreshButton;
     private JLabel subtotalLabel;
     private JLabel taxLabel;
@@ -28,6 +31,7 @@ public class BillPanel extends JPanel {
 
     public BillPanel(DatabaseManager dbManager) {
         this.dbManager = dbManager;
+        this.tableManager = new TableManager(dbManager);  // 初始化餐桌管理器
         initializeComponents();
         setupLayout();
         setupEventHandlers();
@@ -40,7 +44,7 @@ public class BillPanel extends JPanel {
         setBackground(new Color(0xECF0F1)); // 设置背景色
 
         // 初始化表格模型
-        String[] columnNames = {"订单ID", "下单时间", "状态", "总计"};
+        String[] columnNames = {"订单ID", "餐桌ID", "下单时间", "状态", "总计"};
         tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -65,13 +69,16 @@ public class BillPanel extends JPanel {
                 case 0: // 订单ID
                     column.setPreferredWidth(80);
                     break;
-                case 1: // 下单时间
+                case 1: // 餐桌ID
+                    column.setPreferredWidth(80);
+                    break;
+                case 2: // 下单时间
                     column.setPreferredWidth(150);
                     break;
-                case 2: // 状态
+                case 3: // 状态
                     column.setPreferredWidth(100);
                     break;
-                case 3: // 总计
+                case 4: // 总计
                     column.setPreferredWidth(100);
                     break;
             }
@@ -115,6 +122,27 @@ public class BillPanel extends JPanel {
 
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 payBillButton.setBackground(new Color(0x27AE60)); // 恢复原色
+            }
+        });
+        
+        customerLeaveButton = new JButton("客户离开");
+        customerLeaveButton.setFont(new Font("微软雅黑", Font.BOLD, 14));
+        customerLeaveButton.setBackground(new Color(0x8E44AD)); // 紫色主题
+        customerLeaveButton.setForeground(Color.WHITE);
+        customerLeaveButton.setFocusPainted(false);
+        customerLeaveButton.setBorder(BorderFactory.createCompoundBorder(
+            new LineBorder(new Color(0xBDC3C7), 1, true),
+            BorderFactory.createEmptyBorder(8, 15, 8, 15)
+        ));
+        customerLeaveButton.setEnabled(false); // 初始禁用，只有在订单完成后才能使用
+        // 添加悬停效果
+        customerLeaveButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                customerLeaveButton.setBackground(new Color(0x7D3C98)); // 深紫色
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                customerLeaveButton.setBackground(new Color(0x8E44AD)); // 恢复原色
             }
         });
         
@@ -219,6 +247,7 @@ public class BillPanel extends JPanel {
         buttonPanel.add(refreshButton);
         buttonPanel.add(printBillButton);
         buttonPanel.add(payBillButton);
+        buttonPanel.add(customerLeaveButton); // 添加客户离开按钮
 
         add(listSplitPane, BorderLayout.CENTER);
         add(totalPanel, BorderLayout.NORTH);
@@ -269,6 +298,14 @@ public class BillPanel extends JPanel {
                 processPayment();
             }
         });
+        
+        // 客户离开按钮事件
+        customerLeaveButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                handleCustomerLeave();
+            }
+        });
     }
 
     // 加载所有订单
@@ -282,6 +319,7 @@ public class BillPanel extends JPanel {
         for (Order order : orders) {
             Object[] rowData = {
                 "订单 #" + order.getOrderId(),
+                order.getTableId() > 0 ? "餐桌 #" + order.getTableId() : "未分配",
                 order.getOrderTime().toString(),
                 order.getStatus(),
                 "¥" + String.format("%.2f", order.getTotal())
@@ -298,8 +336,29 @@ public class BillPanel extends JPanel {
         details.append("订单详情\n");
         details.append("==================\n");
         details.append("订单号: ").append(order.getOrderId()).append("\n");
+        details.append("餐桌号: ").append(order.getTableId() > 0 ? order.getTableId() : "未分配").append("\n");
         details.append("下单时间: ").append(order.getOrderTime()).append("\n");
         details.append("状态: ").append(order.getStatus()).append("\n");
+        
+        // 如果订单关联了餐桌，显示餐桌详情
+        if (order.getTableId() > 0) {
+            Table table = tableManager.getTableById(order.getTableId());
+            if (table != null) {
+                details.append("餐桌名称: ").append(table.getTableName()).append("\n");
+                details.append("餐桌容量: ").append(table.getCapacity()).append("人\n");
+                
+                if (table.getCheckInTime() != null) {
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    details.append("客户入住时间: ").append(sdf.format(table.getCheckInTime())).append("\n");
+                }
+                
+                if (table.getCheckOutTime() != null) {
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    details.append("客户离开时间: ").append(sdf.format(table.getCheckOutTime())).append("\n");
+                }
+            }
+        }
+        
         details.append("\n订单项:\n");
         
         for (OrderItem item : order.getItems()) {
@@ -322,6 +381,9 @@ public class BillPanel extends JPanel {
         
         // 更新总计标签
         updateTotalLabels(order);
+        
+        // 根据订单状态启用/禁用客户离开按钮
+        customerLeaveButton.setEnabled("已完成".equals(order.getStatus()));
     }
 
     // 更新总计标签
@@ -336,6 +398,7 @@ public class BillPanel extends JPanel {
         loadAllOrders();
         billDetailsArea.setText("");
         selectedOrder = null;
+        customerLeaveButton.setEnabled(false);
     }
 
     // 打印账单
@@ -351,6 +414,7 @@ public class BillPanel extends JPanel {
         billContent.append("    餐厅账单\n");
         billContent.append("===================\n");
         billContent.append("订单号: ").append(selectedOrder.getOrderId()).append("\n");
+        billContent.append("餐桌号: ").append(selectedOrder.getTableId() > 0 ? selectedOrder.getTableId() : "未分配").append("\n");
         billContent.append("时间: ").append(selectedOrder.getOrderTime()).append("\n");
         billContent.append("-------------------\n");
         
@@ -430,6 +494,58 @@ public class BillPanel extends JPanel {
                 "\n金额: ¥" + String.format("%.2f", total), 
                 "支付成功", 
                 JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    // 处理客户离开
+    private void handleCustomerLeave() {
+        if (selectedOrder == null) {
+            JOptionPane.showMessageDialog(this, "请先选择一个订单", "提示", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if (!"已完成".equals(selectedOrder.getStatus())) {
+            JOptionPane.showMessageDialog(this, "只有已完成支付的订单才能办理客户离开", "提示", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if (selectedOrder.getTableId() <= 0) {
+            JOptionPane.showMessageDialog(this, "该订单未关联餐桌，无需办理客户离开", "提示", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        Table table = tableManager.getTableById(selectedOrder.getTableId());
+        if (table == null) {
+            JOptionPane.showMessageDialog(this, "餐桌信息不存在", "错误", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int result = JOptionPane.showConfirmDialog(
+            this,
+            "确认餐桌 " + table.getTableName() + " 的客户已离开？\n" +
+            "这将释放餐桌供其他客户使用。",
+            "确认客户离开",
+            JOptionPane.YES_NO_OPTION
+        );
+
+        if (result == JOptionPane.YES_OPTION) {
+            // 释放餐桌
+            boolean tableReleased = tableManager.releaseTable(selectedOrder.getTableId());
+            
+            if (tableReleased) {
+                // 刷新界面
+                refreshBillList();
+                
+                JOptionPane.showMessageDialog(this, 
+                    "客户离开处理成功！\n餐桌 " + table.getTableName() + " 已释放，可供其他客户使用。", 
+                    "客户离开", 
+                    JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, 
+                    "客户离开处理失败，请重试。", 
+                    "错误", 
+                    JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 

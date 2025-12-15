@@ -11,12 +11,14 @@ import java.awt.event.WindowEvent;
  */
 public class RestaurantManagementSystem extends JFrame {
     private DatabaseManager dbManager;
+    private TableManager tableManager;
     private Order currentOrder;
     
     // 面板
     private MenuPanel menuPanel;
     private OrderPanel orderPanel;
     private BillPanel billPanel;
+    private TableSelectionPanel tableSelectionPanel;
     
     // 选项卡面板
     private JTabbedPane tabbedPane;
@@ -29,6 +31,7 @@ public class RestaurantManagementSystem extends JFrame {
     private JMenuItem menuViewItem;
     private JMenuItem orderViewItem;
     private JMenuItem billViewItem;
+    private JMenuItem tableSelectionViewItem;
     private JMenu helpMenu;
     private JMenuItem aboutItem;
 
@@ -49,11 +52,14 @@ public class RestaurantManagementSystem extends JFrame {
         
         // 初始化数据库管理器
         dbManager = new DatabaseManager();
+        // 初始化餐桌管理器
+        tableManager = new TableManager(dbManager);
         
         // 初始化面板
         orderPanel = new OrderPanel(currentOrder, dbManager);
         menuPanel = new MenuPanel(dbManager, currentOrder, orderPanel);
         billPanel = new BillPanel(dbManager);
+        tableSelectionPanel = new TableSelectionPanel(dbManager, tableManager, currentOrder, orderPanel);
         
         // 初始化选项卡面板
         tabbedPane = new JTabbedPane();
@@ -62,6 +68,7 @@ public class RestaurantManagementSystem extends JFrame {
         tabbedPane.setBackground(new Color(0xECF0F1));
         
         // 添加面板到选项卡
+        tabbedPane.addTab("餐桌选择", null, tableSelectionPanel, "选择餐桌并开始点餐");
         tabbedPane.addTab("菜单浏览", null, menuPanel, "浏览和选择菜品");
         tabbedPane.addTab("订单管理", null, orderPanel, "管理当前订单");
         tabbedPane.addTab("账单管理", null, billPanel, "查看和处理账单");
@@ -85,6 +92,10 @@ public class RestaurantManagementSystem extends JFrame {
         viewMenu = new JMenu("视图");
         viewMenu.setFont(new Font("微软雅黑", Font.PLAIN, 14));
         viewMenu.setForeground(Color.WHITE);
+        tableSelectionViewItem = new JMenuItem("餐桌选择");
+        tableSelectionViewItem.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        tableSelectionViewItem.setBackground(new Color(0x2C3E50));
+        tableSelectionViewItem.setForeground(Color.WHITE);
         menuViewItem = new JMenuItem("菜单浏览");
         menuViewItem.setFont(new Font("微软雅黑", Font.PLAIN, 14));
         menuViewItem.setBackground(new Color(0x2C3E50));
@@ -98,6 +109,7 @@ public class RestaurantManagementSystem extends JFrame {
         billViewItem.setBackground(new Color(0x2C3E50));
         billViewItem.setForeground(Color.WHITE);
         
+        viewMenu.add(tableSelectionViewItem);
         viewMenu.add(menuViewItem);
         viewMenu.add(orderViewItem);
         viewMenu.add(billViewItem);
@@ -148,9 +160,10 @@ public class RestaurantManagementSystem extends JFrame {
         exitItem.addActionListener(e -> exitApplication());
         
         // 视图菜单项事件
-        menuViewItem.addActionListener(e -> tabbedPane.setSelectedIndex(0));
-        orderViewItem.addActionListener(e -> tabbedPane.setSelectedIndex(1));
-        billViewItem.addActionListener(e -> tabbedPane.setSelectedIndex(2));
+        tableSelectionViewItem.addActionListener(e -> tabbedPane.setSelectedIndex(0));
+        menuViewItem.addActionListener(e -> tabbedPane.setSelectedIndex(1));
+        orderViewItem.addActionListener(e -> tabbedPane.setSelectedIndex(2));
+        billViewItem.addActionListener(e -> tabbedPane.setSelectedIndex(3));
         
         // 关于菜单项事件
         aboutItem.addActionListener(e -> showAboutDialog());
@@ -159,13 +172,16 @@ public class RestaurantManagementSystem extends JFrame {
         tabbedPane.addChangeListener(e -> {
             int selectedIndex = tabbedPane.getSelectedIndex();
             switch (selectedIndex) {
-                case 0: // 菜单面板
+                case 0: // 餐桌选择面板
+                    tableSelectionPanel.refresh();
+                    break;
+                case 1: // 菜单面板
                     menuPanel.refresh();
                     break;
-                case 1: // 订单面板
+                case 2: // 订单面板
                     orderPanel.refresh();
                     break;
-                case 2: // 账单面板
+                case 3: // 账单面板
                     billPanel.refresh();
                     break;
             }
